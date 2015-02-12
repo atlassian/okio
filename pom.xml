@@ -40,7 +40,7 @@
 
   <issueManagement>
     <system>GitHub Issues</system>
-    <url>https://github.com/square/okio/issues</url>
+    <url>https://github.com/atlassian/okio/issues</url>
   </issueManagement>
 
   <licenses>
@@ -64,7 +64,6 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-
 
   <distributionManagement>
     <repository>
