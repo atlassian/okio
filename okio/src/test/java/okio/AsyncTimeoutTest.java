@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications made by Atlassian Pty Ltd. (www.atlassian.com). Modifications Copyright (C) 2015 Atlassian Pty Ltd.
  */
 package okio;
 
@@ -21,7 +23,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -39,6 +44,10 @@ public class AsyncTimeoutTest {
   private final AsyncTimeout b = new RecordingAsyncTimeout();
   private final AsyncTimeout c = new RecordingAsyncTimeout();
   private final AsyncTimeout d = new RecordingAsyncTimeout();
+
+  @BeforeClass public static void init() {
+    AsyncTimeout.open();
+  }
 
   @Before public void setUp() throws Exception {
     a.timeout( 250, TimeUnit.MILLISECONDS);
@@ -260,7 +269,35 @@ public class AsyncTimeoutTest {
     }
   }
 
-  /** Asserts which timeouts fired, and in which order. */
+  @Test public void finishCurrentTimeoutOnClose() throws Exception {
+    try {
+      a.enter();
+      AsyncTimeout.close();
+      Thread.sleep(500);
+      assertTrue(a.exit());
+      assertTimedOut(a);
+    } finally {
+      AsyncTimeout.open();
+    }
+  }
+
+  @Test public void doNotEnterOnClose() throws Exception {
+    try {
+      AsyncTimeout.close();
+      AsyncTimeout timeout = new RecordingAsyncTimeout();
+      timeout.timeout(1, TimeUnit.MILLISECONDS);
+      timeout.enter();
+    } catch (IOException expected) {
+    } finally {
+      AsyncTimeout.open();
+    }
+  }
+
+  @AfterClass public static void destroy() throws Exception {
+    AsyncTimeout.close();
+  }
+
+    /** Asserts which timeouts fired, and in which order. */
   private void assertTimedOut(Timeout... expected) {
     assertEquals(Arrays.asList(expected), timedOut);
   }

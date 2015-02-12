@@ -12,6 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Modifications made by Atlassian Pty Ltd. (www.atlassian.com). Modifications Copyright (C) 2015 Atlassian Pty Ltd.
  */
 package okio;
 
@@ -23,6 +25,9 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
@@ -30,6 +35,10 @@ import static org.junit.Assert.fail;
 
 public class SocketTimeoutTest {
   private static final int ONE_MB = 1024 * 1024;
+
+  @BeforeClass public static void init() {
+    AsyncTimeout.open();
+  }
 
   @Test public void readWithoutTimeout() throws Exception {
     Socket socket = socket(ONE_MB, 0);
@@ -80,7 +89,12 @@ public class SocketTimeoutTest {
     assertTrue("elapsed: " + elapsed, TimeUnit.NANOSECONDS.toMillis(elapsed) <= 750);
   }
 
-  /**
+  @AfterClass public static void destroy() throws Exception {
+    AsyncTimeout.close();
+  }
+
+
+    /**
    * Returns a socket that can read {@code readableByteCount} incoming bytes and
    * will accept {@code writableByteCount} written bytes. The socket will idle
    * for 5 seconds when the required data has been read and written.

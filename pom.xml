@@ -11,7 +11,7 @@
 
   <groupId>com.squareup.okio</groupId>
   <artifactId>okio-parent</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.0-atlassian-1</version>
   <packaging>pom</packaging>
   <name>Okio (Parent)</name>
   <description>A modern I/O API for Java</description>
@@ -33,10 +33,9 @@
   </properties>
 
   <scm>
-    <url>https://github.com/square/okio/</url>
-    <connection>scm:git:https://github.com/square/okio.git</connection>
-    <developerConnection>scm:git:git@github.com:square/okio.git</developerConnection>
-    <tag>okio-parent-1.0.0</tag>
+    <connection>scm:git:https://github.com/atlassian/okio.git</connection>
+    <developerConnection>scm:git:git@github.com/atlassian/okio.git</developerConnection>
+    <url>https://github.com/atlassian/okio</url>
   </scm>
 
   <issueManagement>
@@ -65,6 +64,18 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+
+
+  <distributionManagement>
+    <repository>
+      <id>atlassian-3rdparty</id>
+      <url>https://maven.atlassian.com/3rdparty</url>
+    </repository>
+    <snapshotRepository>
+      <id>atlassian-3rdparty-snapshot</id>
+      <url>https://maven.atlassian.com/3rdparty-snapshot</url>
+    </snapshotRepository>
+  </distributionManagement>
 
   <build>
     <pluginManagement>

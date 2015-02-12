@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.squareup.okio</groupId>
     <artifactId>okio-parent</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.0-atlassian-1</version>
   </parent>
 
   <artifactId>okio</artifactId>
@@ -25,4 +25,36 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.6</version>
+        <executions>
+          <execution>
+            <id>copy-license</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.outputDirectory}/META-INF</outputDirectory>
+              <overwrite>true</overwrite>
+              <resources>
+                <resource>
+                  <directory>${user.dir}</directory>
+                  <includes>
+                    <include>LICENSE.txt</include>
+                  </includes>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>
