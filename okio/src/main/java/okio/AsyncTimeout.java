@@ -301,7 +301,7 @@ public class AsyncTimeout extends Timeout {
     }
 
     public boolean isRunning() {
-      return running;
+      return queueHasData() || running;
     }
   }
 
@@ -333,13 +333,17 @@ public class AsyncTimeout extends Timeout {
       long waitMillis = waitNanos / 1000000L;
       waitNanos -= (waitMillis * 1000000L);
       AsyncTimeout.class.wait(waitMillis, (int) waitNanos);
-      return awaitTimeout(watchDog);
+      return null;
     }
 
     // The head of the queue has timed out. Remove it.
     head.next = node.next;
     node.next = null;
     return node;
+  }
+
+  private static boolean queueHasData() {
+      return head.next != null;
   }
 
   /**
