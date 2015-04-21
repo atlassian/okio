@@ -61,11 +61,16 @@ final class RealBufferedSource implements BufferedSource {
   }
 
   @Override public void require(long byteCount) throws IOException {
+    if (!request(byteCount)) throw new EOFException();
+  }
+
+  @Override public boolean request(long byteCount) throws IOException {
     if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
     if (closed) throw new IllegalStateException("closed");
     while (buffer.size < byteCount) {
-      if (source.read(buffer, Segment.SIZE) == -1) throw new EOFException();
+      if (source.read(buffer, Segment.SIZE) == -1) return false;
     }
+    return true;
   }
 
   @Override public byte readByte() throws IOException {
@@ -93,8 +98,46 @@ final class RealBufferedSource implements BufferedSource {
     return buffer.readByteArray(byteCount);
   }
 
+  @Override public int read(byte[] sink) throws IOException {
+    return read(sink, 0, sink.length);
+  }
+
+  @Override public void readFully(byte[] sink) throws IOException {
+    try {
+      require(sink.length);
+    } catch (EOFException e) {
+      // The underlying source is exhausted. Copy the bytes we got before rethrowing.
+      int offset = 0;
+      while (buffer.size > 0) {
+        int read = buffer.read(sink, offset, (int) buffer.size - offset);
+        if (read == -1) throw new AssertionError();
+        offset += read;
+      }
+      throw e;
+    }
+    buffer.readFully(sink);
+  }
+
+  @Override public int read(byte[] sink, int offset, int byteCount) throws IOException {
+    checkOffsetAndCount(sink.length, offset, byteCount);
+
+    if (buffer.size == 0) {
+      long read = source.read(buffer, Segment.SIZE);
+      if (read == -1) return -1;
+    }
+
+    int toRead = (int) Math.min(byteCount, buffer.size);
+    return buffer.read(sink, offset, toRead);
+  }
+
   @Override public void readFully(Buffer sink, long byteCount) throws IOException {
-    require(byteCount);
+    try {
+      require(byteCount);
+    } catch (EOFException e) {
+      // The underlying source is exhausted. Copy the bytes we got before rethrowing.
+      sink.writeAll(buffer);
+      throw e;
+    }
     buffer.readFully(sink, byteCount);
   }
 
@@ -151,7 +194,12 @@ final class RealBufferedSource implements BufferedSource {
 
   @Override public String readUtf8LineStrict() throws IOException {
     long newline = indexOf((byte) '\n');
-    if (newline == -1L) throw new EOFException();
+    if (newline == -1L) {
+      Buffer data = new Buffer();
+      buffer.copyTo(data, 0, Math.min(32, buffer.size()));
+      throw new EOFException("\\n not found: size=" + buffer.size()
+          + " content=" + data.readByteString().hex() + "...");
+    }
     return buffer.readUtf8Line(newline);
   }
 
@@ -185,6 +233,42 @@ final class RealBufferedSource implements BufferedSource {
     return buffer.readLongLe();
   }
 
+  @Override public long readDecimalLong() throws IOException {
+    require(1);
+
+    for (int pos = 0; request(pos + 1); pos++) {
+      byte b = buffer.getByte(pos);
+      if ((b < '0' || b > '9') && (pos != 0 || b != '-')) {
+        // Non-digit, or non-leading negative sign.
+        if (pos == 0) {
+          throw new NumberFormatException(String.format(
+              "Expected leading [0-9] or '-' character but was %#x", b));
+        }
+        break;
+      }
+    }
+
+    return buffer.readDecimalLong();
+  }
+
+  @Override public long readHexadecimalUnsignedLong() throws IOException {
+    require(1);
+
+    for (int pos = 0; request(pos + 1); pos++) {
+      byte b = buffer.getByte(pos);
+      if ((b < '0' || b > '9') && (b < 'a' || b > 'f') && (b < 'A' || b > 'F')) {
+        // Non-digit, or non-leading negative sign.
+        if (pos == 0) {
+          throw new NumberFormatException(String.format(
+              "Expected leading [0-9a-fA-F] character but was %#x", b));
+        }
+        break;
+      }
+    }
+
+    return buffer.readHexadecimalUnsignedLong();
+  }
+
   @Override public void skip(long byteCount) throws IOException {
     if (closed) throw new IllegalStateException("closed");
     while (byteCount > 0) {
@@ -198,11 +282,34 @@ final class RealBufferedSource implements BufferedSource {
   }
 
   @Override public long indexOf(byte b) throws IOException {
+    return indexOf(b, 0);
+  }
+
+  @Override public long indexOf(byte b, long fromIndex) throws IOException {
     if (closed) throw new IllegalStateException("closed");
-    long start = 0;
+    while (fromIndex >= buffer.size) {
+      if (source.read(buffer, Segment.SIZE) == -1) return -1L;
+    }
     long index;
-    while ((index = buffer.indexOf(b, start)) == -1) {
-      start = buffer.size;
+    while ((index = buffer.indexOf(b, fromIndex)) == -1) {
+      fromIndex = buffer.size;
+      if (source.read(buffer, Segment.SIZE) == -1) return -1L;
+    }
+    return index;
+  }
+
+  @Override public long indexOfElement(ByteString targetBytes) throws IOException {
+    return indexOfElement(targetBytes, 0);
+  }
+
+  @Override public long indexOfElement(ByteString targetBytes, long fromIndex) throws IOException {
+    if (closed) throw new IllegalStateException("closed");
+    while (fromIndex >= buffer.size) {
+      if (source.read(buffer, Segment.SIZE) == -1) return -1L;
+    }
+    long index;
+    while ((index = buffer.indexOfElement(targetBytes, fromIndex)) == -1) {
+      fromIndex = buffer.size;
       if (source.read(buffer, Segment.SIZE) == -1) return -1L;
     }
     return index;

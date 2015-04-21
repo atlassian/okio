@@ -42,16 +42,32 @@ public interface BufferedSink extends Sink {
   BufferedSink write(byte[] source, int offset, int byteCount) throws IOException;
 
   /**
-   * Removes all bytes from {@code source} and appends them to this. Returns the
+   * Removes all bytes from {@code source} and appends them to this sink. Returns the
    * number of bytes read which will be 0 if {@code source} is exhausted.
    */
   long writeAll(Source source) throws IOException;
 
+  /** Removes {@code byteCount} bytes from {@code source} and appends them to this sink. */
+  BufferedSink write(Source source, long byteCount) throws IOException;
+
   /** Encodes {@code string} in UTF-8 and writes it to this sink. */
   BufferedSink writeUtf8(String string) throws IOException;
 
+  /**
+   * Encodes the characters at {@code beginIndex} up to {@code endIndex} from {@code string} in
+   * UTF-8 and writes it to this sink.
+   */
+  BufferedSink writeUtf8(String string, int beginIndex, int endIndex) throws IOException;
+
   /** Encodes {@code string} in {@code charset} and writes it to this sink. */
   BufferedSink writeString(String string, Charset charset) throws IOException;
+
+  /**
+   * Encodes the characters at {@code beginIndex} up to {@code endIndex} from {@code string} in
+   * {@code charset} and writes it to this sink.
+   */
+  BufferedSink writeString(String string, int beginIndex, int endIndex, Charset charset)
+      throws IOException;
 
   /** Writes a byte to this sink. */
   BufferedSink writeByte(int b) throws IOException;
@@ -74,8 +90,24 @@ public interface BufferedSink extends Sink {
   /** Writes a little-endian long to this sink using eight bytes. */
   BufferedSink writeLongLe(long v) throws IOException;
 
-  /** Writes complete segments to this sink. Like {@link #flush}, but weaker. */
+  /** Writes a long to this sink in signed decimal form (i.e., as a string in base 10). */
+  BufferedSink writeDecimalLong(long v) throws IOException;
+
+  /** Writes a long to this sink in hexadecimal form (i.e., as a string in base 16). */
+  BufferedSink writeHexadecimalUnsignedLong(long v) throws IOException;
+
+  /**
+   * Writes complete segments to the underlying sink, if one exists. Like {@link #flush}, but
+   * weaker. Use this to limit the memory held in the buffer to a single segment.
+   */
   BufferedSink emitCompleteSegments() throws IOException;
+
+  /**
+   * Writes all buffered data to the underlying sink, if one exists. Like {@link #flush}, but
+   * weaker. Call this before this buffered sink goes out of scope so that its data can reach its
+   * destination.
+   */
+  BufferedSink emit() throws IOException;
 
   /** Returns an output stream that writes to this sink. */
   OutputStream outputStream();

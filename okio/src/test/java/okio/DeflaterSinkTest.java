@@ -37,7 +37,7 @@ public final class DeflaterSinkTest {
     deflaterSink.write(data, data.size());
     deflaterSink.close();
     Buffer inflated = inflate(sink);
-    assertEquals(original, inflated.readUtf8(inflated.size()));
+    assertEquals(original, inflated.readUtf8());
   }
 
   @Test public void deflateWithSyncFlush() throws Exception {
@@ -49,7 +49,7 @@ public final class DeflaterSinkTest {
     deflaterSink.write(data, data.size());
     deflaterSink.flush();
     Buffer inflated = inflate(sink);
-    assertEquals(original, inflated.readUtf8(inflated.size()));
+    assertEquals(original, inflated.readUtf8());
   }
 
   @Test public void deflateWellCompressed() throws IOException {
@@ -61,7 +61,7 @@ public final class DeflaterSinkTest {
     deflaterSink.write(data, data.size());
     deflaterSink.close();
     Buffer inflated = inflate(sink);
-    assertEquals(original, inflated.readUtf8(inflated.size()));
+    assertEquals(original, inflated.readUtf8());
   }
 
   @Test public void deflatePoorlyCompressed() throws IOException {
@@ -73,7 +73,7 @@ public final class DeflaterSinkTest {
     deflaterSink.write(data, data.size());
     deflaterSink.close();
     Buffer inflated = inflate(sink);
-    assertEquals(original, inflated.readByteString(inflated.size()));
+    assertEquals(original, inflated.readByteString());
   }
 
   @Test public void multipleSegmentsWithoutCompression() throws IOException {
@@ -85,6 +85,24 @@ public final class DeflaterSinkTest {
     deflaterSink.write(new Buffer().writeUtf8(repeat('a', byteCount)), byteCount);
     deflaterSink.close();
     assertEquals(repeat('a', byteCount), inflate(buffer).readUtf8(byteCount));
+  }
+
+  @Test public void deflateIntoNonemptySink() throws Exception {
+    String original = "They're moving in herds. They do move in herds.";
+
+    // Exercise all possible offsets for the outgoing segment.
+    for (int i = 0; i < Segment.SIZE; i++) {
+      Buffer data = new Buffer().writeUtf8(original);
+      Buffer sink = new Buffer().writeUtf8(repeat('a', i));
+
+      DeflaterSink deflaterSink = new DeflaterSink(sink, new Deflater());
+      deflaterSink.write(data, data.size());
+      deflaterSink.close();
+
+      sink.skip(i);
+      Buffer inflated = inflate(sink);
+      assertEquals(original, inflated.readUtf8());
+    }
   }
 
   /**
@@ -121,7 +139,9 @@ public final class DeflaterSinkTest {
     byte[] buffer = new byte[8192];
     while (!inflater.needsInput() || deflated.size() > 0 || deflatedIn.available() > 0) {
       int count = inflatedIn.read(buffer, 0, buffer.length);
-      result.write(buffer, 0, count);
+      if (count != -1) {
+        result.write(buffer, 0, count);
+      }
     }
     return result;
   }

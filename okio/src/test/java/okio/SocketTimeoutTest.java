@@ -34,6 +34,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class SocketTimeoutTest {
+
+  // The size of the socket buffers to use. Less than half the data transferred during tests to
+  // ensure send and receive buffers are flooded and any necessary blocking behavior takes place.
+  private static final int SOCKET_BUFFER_SIZE = 256 * 1024;
   private static final int ONE_MB = 1024 * 1024;
 
   @BeforeClass public static void init() {
@@ -102,12 +106,14 @@ public class SocketTimeoutTest {
   static Socket socket(final int readableByteCount, final int writableByteCount) throws IOException {
     final ServerSocket serverSocket = new ServerSocket(0);
     serverSocket.setReuseAddress(true);
+    serverSocket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
 
     Thread peer = new Thread("peer") {
       @Override public void run() {
         Socket socket = null;
         try {
           socket = serverSocket.accept();
+          socket.setSendBufferSize(SOCKET_BUFFER_SIZE);
           writeFully(socket.getOutputStream(), readableByteCount);
           readFully(socket.getInputStream(), writableByteCount);
           Thread.sleep(5000); // Sleep 5 seconds so the peer can close the connection.
@@ -122,7 +128,10 @@ public class SocketTimeoutTest {
     };
     peer.start();
 
-    return new Socket(serverSocket.getInetAddress(), serverSocket.getLocalPort());
+    Socket socket = new Socket(serverSocket.getInetAddress(), serverSocket.getLocalPort());
+    socket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
+    socket.setSendBufferSize(SOCKET_BUFFER_SIZE);
+    return socket;
   }
 
   private static void writeFully(OutputStream out, int byteCount) throws IOException {

@@ -11,7 +11,7 @@
 
   <groupId>com.squareup.okio</groupId>
   <artifactId>okio-parent</artifactId>
-  <version>1.0.0-atlassian-2</version>
+  <version>1.3.0-atlassian-1</version>
   <packaging>pom</packaging>
   <name>Okio (Parent)</name>
   <description>A modern I/O API for Java</description>
@@ -23,19 +23,21 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <java.version>1.6</java.version>
+    <java.version>1.7</java.version>
 
     <!-- Dependencies -->
     <animal.sniffer.version>1.10</animal.sniffer.version>
+    <jmh.version>1.4.1</jmh.version>
 
     <!-- Test Dependencies -->
     <junit.version>4.11</junit.version>
   </properties>
 
   <scm>
+    <url>https://github.com/atlassian/okio</url>
     <connection>scm:git:https://github.com/atlassian/okio.git</connection>
     <developerConnection>scm:git:git@github.com/atlassian/okio.git</developerConnection>
-    <url>https://github.com/atlassian/okio</url>
+    <tag>HEAD</tag>
   </scm>
 
   <issueManagement>
@@ -61,6 +63,17 @@
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>animal-sniffer-annotations</artifactId>
         <version>${animal.sniffer.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.openjdk.jmh</groupId>
+        <artifactId>jmh-core</artifactId>
+        <version>${jmh.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.openjdk.jmh</groupId>
+        <artifactId>jmh-generator-annprocess</artifactId>
+        <version>${jmh.version}</version>
+        <scope>provided</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -98,27 +111,6 @@
         <version>2.5</version>
         <configuration>
           <autoVersionSubmodules>true</autoVersionSubmodules>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>animal-sniffer-maven-plugin</artifactId>
-        <version>${animal.sniffer.version}</version>
-        <executions>
-          <execution>
-            <phase>test</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <signature>
-            <groupId>org.codehaus.mojo.signature</groupId>
-            <artifactId>java16</artifactId>
-            <version>1.1</version>
-          </signature>
         </configuration>
       </plugin>
     </plugins>

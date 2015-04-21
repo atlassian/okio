@@ -116,21 +116,27 @@ Download
 --------
 
 Download [the latest JAR][2] or grab via Maven:
-
 ```xml
 <dependency>
     <groupId>com.squareup.okio</groupId>
     <artifactId>okio</artifactId>
-    <version>(insert latest version)</version>
+    <version>1.3.0</version>
 </dependency>
 ```
+or Gradle:
+```groovy
+compile 'com.squareup.okio:okio:1.3.0'
+```
+
+Snapshots of the development version are available in [Sonatype's `snapshots` repository][snap].
 
 
  [1]: https://github.com/square/okhttp
- [2]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okio&a=okio&v=LATEST
+ [2]: https://search.maven.org/remote_content?g=com.squareup.okio&a=okio&v=LATEST
  [3]: http://square.github.io/okio/okio/ByteString.html
  [4]: http://square.github.io/okio/okio/Buffer.html
  [5]: http://square.github.io/okio/okio/Source.html
  [6]: http://square.github.io/okio/okio/Sink.html
  [7]: http://square.github.io/okio/okio/BufferedSource.html
  [8]: http://square.github.io/okio/okio/BufferedSink.html
+ [snap]: https://oss.sonatype.org/content/repositories/snapshots/
